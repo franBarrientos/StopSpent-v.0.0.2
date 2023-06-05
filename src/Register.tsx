@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import useApp from "./hook/useApp";
 import { useNavigate } from "react-router-dom";
 import {
@@ -10,45 +10,24 @@ import {
   Input,
   useToast,
   CircularProgress,
-  Flex
+  Flex,
 } from "@chakra-ui/react";
 import apiClient from "./config/axiosClient";
-
+import { useForm } from "react-hook-form";
+import { UserData } from "./interfaces/user";
 export default function Register() {
   const { setWhereStay } = useApp();
   useEffect(() => {
     setWhereStay("login");
   }, []);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [salary, setSalary] = useState("");
-  const [surname, setSurname] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
+  const { handleSubmit, register, getValues } = useForm();
 
-  const handleEmailChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setEmail(event.target.value);
-  };
-
-  const handlePasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setPassword(event.target.value);
-  };
-
-  const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setName(event.target.value);
-  };
-  const handleSetSalary = (event: ChangeEvent<HTMLInputElement>) => {
-    setSalary(event.target.value);
-  };
-  const handleSurnameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setSurname(event.target.value);
-  };
-
-  const validate = () => {
-    if (email.trim() === "") {
+  const validate = ({email, password, name, surname, salary}:UserData) => {
+    if (!email || email.trim() === "") {
       toast({
         title: "Valores invalidos.",
         description: "Ingrese un email valido.",
@@ -61,7 +40,7 @@ export default function Register() {
       return false;
     }
 
-    if (password.trim() === "") {
+    if (!password || password.trim() === "") {
       toast({
         title: "Valores invalidos.",
         description: "Ingrese una contraseña valida.",
@@ -73,7 +52,7 @@ export default function Register() {
       setIsLoading(false);
       return false;
     }
-    if (name.trim() === "") {
+    if (!name || name.trim() === "") {
       toast({
         title: "Valores invalidos.",
         description: "Ingrese un nombre valido.",
@@ -85,7 +64,7 @@ export default function Register() {
       setIsLoading(false);
       return false;
     }
-    if (surname.trim() === "") {
+    if (!surname || surname.trim() === "") {
       toast({
         title: "Valores invalidos.",
         description: "Ingrese una apellido valido.",
@@ -97,7 +76,7 @@ export default function Register() {
       setIsLoading(false);
       return false;
     }
-    if (salary.trim() === "") {
+    if (!salary || salary.toString().trim() === "") {
       toast({
         title: "Valores invalidos.",
         description: "Ingrese una salario valido.",
@@ -112,17 +91,11 @@ export default function Register() {
     return true;
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const onSubmit = async () => {
     setIsLoading(true);
-    if (!validate()) return;
-    const formData = {
-      name,
-      surname,
-      email,
-      password,
-      salary: Number(salary),
-    };
+    const formData = getValues()
+    if (!validate(formData as UserData)) return;
+    formData.salary = Number(formData.salary)
     try {
       const response = await apiClient.post("/auth/register", formData);
       const { data } = response;
@@ -168,13 +141,12 @@ export default function Register() {
       borderRadius="md"
       boxShadow="md"
     >
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <Heading mb={4}>Registrarme</Heading>
         <FormControl mt={4}>
           <FormLabel>Nombre</FormLabel>
           <Input
-            onChange={handleNameChange}
-            value={name}
+            {...register("name")}
             type="text"
             placeholder="Nombre"
             focusBorderColor="whiteAlpha.900"
@@ -185,8 +157,7 @@ export default function Register() {
         <FormControl mt={4}>
           <FormLabel>Apellido</FormLabel>
           <Input
-            onChange={handleSurnameChange}
-            value={surname}
+            {...register("surname")}
             type="text"
             placeholder="Apellido"
             focusBorderColor="whiteAlpha.900"
@@ -198,8 +169,7 @@ export default function Register() {
           <FormLabel>Correo electrónico</FormLabel>
           <Input
             fontSize={"lg"}
-            onChange={handleEmailChange}
-            value={email}
+            {...register("email")}
             type="email"
             placeholder="Correo electrónico"
             focusBorderColor="whiteAlpha.900"
@@ -210,8 +180,7 @@ export default function Register() {
         <FormControl mt={4}>
           <FormLabel>Contraseña</FormLabel>
           <Input
-            onChange={handlePasswordChange}
-            value={password}
+           {...register("password")}
             type="password"
             placeholder="Contraseña"
             focusBorderColor="whiteAlpha.900"
@@ -222,8 +191,7 @@ export default function Register() {
         <FormControl mt={4}>
           <FormLabel>Mi Salario Mensual</FormLabel>
           <Input
-            onChange={handleSetSalary}
-            value={salary}
+            {...register("salary")}
             type="number"
             placeholder="Ingrese el monto Ej: 150000"
             focusBorderColor="whiteAlpha.900"
@@ -233,12 +201,13 @@ export default function Register() {
         </FormControl>
         {isLoading ? (
           <Flex mt={4} justifyContent={"center"} alignItems={"center"}>
-            <CircularProgress isIndeterminate color='green.300' />
+            <CircularProgress isIndeterminate color="green.300" />
           </Flex>
         ) : (
-        <Button type="submit" mt={6} colorScheme="blue" width={"full"}>
-          Registrarme
-        </Button>)}
+          <Button type="submit" mt={6} colorScheme="blue" width={"full"}>
+            Registrarme
+          </Button>
+        )}
       </form>
     </Box>
   );

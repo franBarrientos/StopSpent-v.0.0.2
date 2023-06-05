@@ -4,7 +4,8 @@ export interface UserData {
     surname:string;
     spents: Spent[];
     salary:number;
-
+    email?:string
+    password?:string
   }
   
 export interface Spent {
